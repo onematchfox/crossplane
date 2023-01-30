@@ -86,11 +86,20 @@ func (c *startCommand) Run(s *runtime.Scheme, log logging.Logger) error {
 	}
 
 	mgr, err := ctrl.NewManager(ratelimiter.LimitRESTConfig(cfg, c.MaxReconcileRate), ctrl.Options{
-		Scheme:                     s,
+		Scheme:     s,
+		SyncPeriod: &c.SyncInterval,
+
+		// controller-runtime uses both ConfigMaps and Leases for leader
+		// election by default. Leases expire by default after 15 seconds, with
+		// a 10 second renewal deadline. Switching to Leases only and longer
+		// leases appears to alleviate leader loss due to renewal deadlines
+		// being exceeded when under high load - i.e. hundreds of reconciles per
+		// second and ~200rps to the API server.
 		LeaderElection:             c.LeaderElection,
 		LeaderElectionID:           "crossplane-leader-election-rbac",
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
-		SyncPeriod:                 &c.SyncInterval,
+		LeaseDuration:              func() *time.Duration { d := 60 * time.Second; return &d }(),
+		RenewDeadline:              func() *time.Duration { d := 50 * time.Second; return &d }(),
 	})
 	if err != nil {
 		return errors.Wrap(err, "cannot create manager")
