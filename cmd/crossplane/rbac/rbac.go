@@ -69,6 +69,8 @@ func (c *Command) Run() error {
 type startCommand struct {
 	ProviderClusterRole string `name:"provider-clusterrole" help:"A ClusterRole enumerating the permissions provider packages may request."`
 	LeaderElection      bool   `name:"leader-election" short:"l" help:"Use leader election for the controller manager." env:"LEADER_ELECTION"`
+	LeaseDuration       int    `name:"lease-duration" help:"Duration that non-leader candidates will wait to force acquire leadership."  default:"60"`
+	RenewDeadline       int    `name:"renew-deadline" help:"Duration that the acting controlplane will retry refreshing leadership before giving up." default:"50"`
 	ManagementPolicy    string `name:"manage" short:"m" help:"RBAC management policy." default:"${rbac_manage_default_var}" enum:"${rbac_manage_enum_var}"`
 
 	SyncInterval     time.Duration `short:"s" help:"How often all resources will be double-checked for drift from the desired state." default:"1h"`
@@ -98,8 +100,8 @@ func (c *startCommand) Run(s *runtime.Scheme, log logging.Logger) error {
 		LeaderElection:             c.LeaderElection,
 		LeaderElectionID:           "crossplane-leader-election-rbac",
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
-		LeaseDuration:              func() *time.Duration { d := 60 * time.Second; return &d }(),
-		RenewDeadline:              func() *time.Duration { d := 50 * time.Second; return &d }(),
+		LeaseDuration:              func() *time.Duration { d := time.Duration(c.LeaseDuration) * time.Second; return &d }(),
+		RenewDeadline:              func() *time.Duration { d := time.Duration(c.RenewDeadline) * time.Second; return &d }(),
 	})
 	if err != nil {
 		return errors.Wrap(err, "cannot create manager")
