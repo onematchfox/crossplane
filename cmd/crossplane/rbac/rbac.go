@@ -68,7 +68,7 @@ func (c *Command) Run() error {
 
 type startCommand struct {
 	ProviderClusterRole string `name:"provider-clusterrole" help:"A ClusterRole enumerating the permissions provider packages may request."`
-	LeaderElection      bool   `name:"leader-election" short:"l" help:"Use leader election for the conroller manager." env:"LEADER_ELECTION"`
+	LeaderElection      bool   `name:"leader-election" short:"l" help:"Use leader election for the controller manager." env:"LEADER_ELECTION"`
 	ManagementPolicy    string `name:"manage" short:"m" help:"RBAC management policy." default:"${rbac_manage_default_var}" enum:"${rbac_manage_enum_var}"`
 
 	SyncInterval     time.Duration `short:"s" help:"How often all resources will be double-checked for drift from the desired state." default:"1h"`
